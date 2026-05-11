@@ -3,118 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的冰箱清單 (自動儲存版)</title>
+    <title>我的冰箱管理系統</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; max-width: 500px; margin: 20px auto; padding: 10px; background-color: #f0f2f5; }
-        h2 { color: #1a73e8; text-align: center; }
-        .input-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .input-group input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; min-width: 80px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f0f0f0; }
-        th { background-color: #1a73e8; color: white; }
-        .btn-qty { width: 32px; height: 32px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 50%; font-weight: bold; transition: 0.2s; }
-        .btn-qty:hover { background: #e8f0fe; border-color: #1a73e8; }
-        .btn-add { background-color: #34a853; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        .btn-delete { color: #d93025; cursor: pointer; background: none; border: none; font-size: 14px; }
-        .count-display { display: inline-block; width: 40px; text-align: center; font-size: 1.1em; font-weight: bold; }
+        body { font-family: "Microsoft JhengHei", sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background-color: #f8f9fa; }
+        h2 { color: #2c3e50; text-align: center; }
+        .input-group { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-group input, .input-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .full-width { grid-column: span 2; }
+        .btn-add { background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        .category-section { margin-bottom: 30px; }
+        .category-title { background: #e9ecef; padding: 8px 15px; border-left: 5px solid #007bff; font-weight: bold; margin-bottom: 10px; border-radius: 0 4px 4px 0; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f1f3f5; font-size: 0.9em; color: #666; }
+        
+        .btn-qty { width: 28px; height: 28px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 4px; }
+        .btn-zero { background-color: #ffc107; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px; }
+        .btn-delete { color: #dc3545; cursor: pointer; background: none; border: none; font-size: 14px; }
+        .count-display { display: inline-block; width: 30px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>❄️ 我的冰箱食材管理</h2>
+    <h2>❄️ 冰箱食材分類管理</h2>
 
-    <!-- 新增食材區域 -->
+    <!-- 新增區域 -->
     <div class="input-group">
-        <input type="text" id="itemName" placeholder="名稱 (如: 高麗菜)">
+        <input type="text" id="itemName" placeholder="食材名稱" class="full-width">
         <input type="number" id="itemQty" placeholder="數量" min="1" value="1">
-        <input type="text" id="itemUnit" placeholder="單位 (如: 顆)">
-        <button class="btn-add" onclick="addNewItem()">＋ 加入冰箱</button>
+        <input type="text" id="itemUnit" placeholder="單位 (顆/片...)">
+        <select id="itemCategory" class="full-width">
+            <option value="青菜類">🥬 青菜類</option>
+            <option value="肉類">🥩 肉類</option>
+            <option value="海鮮/其他">🐟 海鮮/其他</option>
+        </select>
+        <button class="btn-add full-width" onclick="addNewItem()">＋ 加入清單</button>
     </div>
 
-    <!-- 食材清單表格 -->
-    <table id="inventoryTable">
-        <thead>
-            <tr>
-                <th>食材</th>
-                <th>數量</th>
-                <th>單位</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="inventoryBody"></tbody>
-    </table>
+    <!-- 顯示區域 -->
+    <div id="displayArea">
+        <!-- 這裡會由 JavaScript 自動產生分類表格 -->
+    </div>
 
     <script>
-        // 初始化：先檢查瀏覽器裡有沒有存過的資料，沒有的話才用預設值
-        let inventory = JSON.parse(localStorage.getItem('myFridgeData')) || [
-            { name: "高麗菜", qty: 1, unit: "顆" },
-            { name: "牛肉", qty: 3, unit: "片" },
-            { name: "鯖魚", qty: 2, unit: "條" },
-            { name: "鱸魚", qty: 1, unit: "條" },
-            { name: "豆腐", qty: 3, unit: "片" }
+        // 初始資料
+        let inventory = JSON.parse(localStorage.getItem('myFridgeDataV2')) || [
+            { name: "高麗菜", qty: 1, unit: "顆", cat: "青菜類" },
+            { name: "牛肉", qty: 3, unit: "片", cat: "肉類" },
+            { name: "鯖魚", qty: 2, unit: "條", cat: "海鮮/其他" },
+            { name: "鱸魚", qty: 1, unit: "條", cat: "海鮮/其他" },
+            { name: "豆腐", qty: 3, unit: "片", cat: "海鮮/其他" }
         ];
 
-        // 儲存資料到瀏覽器的函式
         function saveData() {
-            localStorage.setItem('myFridgeData', JSON.stringify(inventory));
+            localStorage.setItem('myFridgeDataV2', JSON.stringify(inventory));
         }
 
-        // 渲染畫面
-        function renderTable() {
-            const body = document.getElementById('inventoryBody');
-            body.innerHTML = "";
-            inventory.forEach((item, index) => {
-                body.innerHTML += `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td>
-                            <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
-                            <span class="count-display">${item.qty}</span>
-                            <button class="btn-qty" onclick="updateQty(${index}, 1)">+</button>
-                        </td>
-                        <td>${item.unit}</td>
-                        <td><button class="btn-delete" onclick="deleteItem(${index})">刪除</button></td>
-                    </tr>
-                `;
+        function render() {
+            const displayArea = document.getElementById('displayArea');
+            displayArea.innerHTML = "";
+            
+            const categories = ["青菜類", "肉類", "海鮮/其他"];
+            
+            categories.forEach(cat => {
+                const filtered = inventory.filter(item => item.cat === cat);
+                if (filtered.length > 0) {
+                    let html = `
+                        <div class="category-section">
+                            <div class="category-title">${cat}</div>
+                            <table>
+                                <thead><tr><th>名稱</th><th>數量管理</th><th>單位</th><th>操作</th></tr></thead>
+                                <tbody>
+                    `;
+                    
+                    inventory.forEach((item, index) => {
+                        if (item.cat === cat) {
+                            html += `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>
+                                        <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
+                                        <span class="count-display">${item.qty}</span>
+                                        <button class="btn-qty" onclick="updateQty(${index}, 1)">+</button>
+                                        <button class="btn-zero" onclick="zeroQty(${index})">歸零</button>
+                                    </td>
+                                    <td>${item.unit}</td>
+                                    <td><button class="btn-delete" onclick="deleteItem(${index})">🗑️</button></td>
+                                </tr>
+                            `;
+                        }
+                    });
+                    
+                    html += `</tbody></table></div>`;
+                    displayArea.innerHTML += html;
+                }
             });
-            saveData(); // 每次畫面更新就存一次檔
+            saveData();
         }
 
-        // 修改數量
         function updateQty(index, change) {
             inventory[index].qty += change;
             if (inventory[index].qty < 0) inventory[index].qty = 0;
-            renderTable();
+            render();
         }
 
-        // 新增食材
+        function zeroQty(index) {
+            if(confirm(`要將 ${inventory[index].name} 數量歸零嗎？`)) {
+                inventory[index].qty = 0;
+                render();
+            }
+        }
+
         function addNewItem() {
             const name = document.getElementById('itemName').value;
             const qty = parseInt(document.getElementById('itemQty').value);
             const unit = document.getElementById('itemUnit').value;
+            const cat = document.getElementById('itemCategory').value;
 
             if (name && !isNaN(qty) && unit) {
-                inventory.push({ name: name, qty: qty, unit: unit });
-                renderTable();
-                // 清空輸入欄
+                inventory.push({ name: name, qty: qty, unit: unit, cat: cat });
+                render();
                 document.getElementById('itemName').value = "";
                 document.getElementById('itemQty').value = "1";
                 document.getElementById('itemUnit').value = "";
             } else {
-                alert("請輸入完整的食材資訊喔！");
+                alert("資訊填寫不完整喔！");
             }
         }
 
-        // 刪除食材
         function deleteItem(index) {
-            if(confirm(`確定要刪除 ${inventory[index].name} 嗎？`)) {
+            if(confirm(`確定要從清單移除 ${inventory[index].name} 嗎？`)) {
                 inventory.splice(index, 1);
-                renderTable();
+                render();
             }
         }
 
-        // 啟動程式
-        renderTable();
+        render();
     </script>
 </body>
 </html>
