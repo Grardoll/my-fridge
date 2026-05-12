@@ -3,86 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的冰箱管理系統</title>
+    <title>冰箱食材智能管家</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background-color: #f8f9fa; }
+        body { font-family: "Microsoft JhengHei", sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background-color: #f4f7f6; }
         h2 { color: #2c3e50; text-align: center; }
-        .input-group { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .input-group input, .input-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* 新增欄位樣式 */
+        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
-        .btn-add { background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        
-        .category-section { margin-bottom: 30px; }
-        .category-title { background: #e9ecef; padding: 8px 15px; border-left: 5px solid #007bff; font-weight: bold; margin-bottom: 10px; border-radius: 0 4px 4px 0; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn-add { background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* 剩餘食材螢幕樣式 */
+        .stock-screen { background: #2d3436; color: #55efc4; padding: 15px; border-radius: 8px; font-family: monospace; min-height: 50px; line-height: 1.6; }
+        .stock-tag { display: inline-block; background: rgba(85, 239, 196, 0.1); border: 1px solid #55efc4; padding: 2px 8px; margin: 3px; border-radius: 4px; font-size: 14px; }
+
+        /* 表格樣式 */
+        .category-title { background: #e9ecef; padding: 8px 12px; border-left: 5px solid #007bff; font-weight: bold; margin: 20px 0 10px 0; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f1f3f5; font-size: 0.9em; color: #666; }
+        th { background-color: #f8f9fa; color: #666; font-size: 0.85em; }
         
-        .btn-qty { width: 28px; height: 28px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 4px; }
-        .btn-zero { background-color: #ffc107; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px; }
-        .btn-delete { color: #dc3545; cursor: pointer; background: none; border: none; font-size: 14px; }
-        .count-display { display: inline-block; width: 30px; text-align: center; font-weight: bold; }
+        .btn-qty { width: 30px; height: 30px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 6px; }
+        .btn-zero { background-color: #ffeaa7; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 5px; color: #d35400; }
+        .btn-delete { background: none; border: none; cursor: pointer; filter: grayscale(1); }
+        .count-display { display: inline-block; width: 35px; text-align: center; font-weight: bold; font-size: 1.1em; }
+        .emoji { font-size: 1.2em; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-    <h2>❄️ 冰箱食材分類管理</h2>
+    <h2>❄️ 冰箱食材管理系統</h2>
 
-    <!-- 新增區域 -->
-    <div class="input-group">
-        <input type="text" id="itemName" placeholder="食材名稱" class="full-width">
-        <input type="number" id="itemQty" placeholder="數量" min="1" value="1">
-        <input type="text" id="itemUnit" placeholder="單位 (顆/片...)">
-        <select id="itemCategory" class="full-width">
-            <option value="青菜類">🥬 青菜類</option>
-            <option value="肉類">🥩 肉類</option>
-            <option value="海鮮/其他">🐟 海鮮/其他</option>
-        </select>
-        <button class="btn-add full-width" onclick="addNewItem()">＋ 加入清單</button>
+    <!-- 1. 輸入區 -->
+    <div class="card">
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="輸入食材名稱" class="full-width">
+            <input type="number" id="itemQty" placeholder="數量" min="1" value="1">
+            <input type="text" id="itemUnit" placeholder="單位">
+            <select id="itemCategory" class="full-width">
+                <option value="青菜類">🥬 青菜類</option>
+                <option value="肉類">🥩 肉類</option>
+                <option value="海鮮類">🐟 海鮮類</option>
+                <option value="其他">📦 其他</option>
+            </select>
+            <button class="btn-add full-width" onclick="addNewItem()">確認放入冰箱</button>
+        </div>
     </div>
 
-    <!-- 顯示區域 -->
-    <div id="displayArea">
-        <!-- 這裡會由 JavaScript 自動產生分類表格 -->
+    <!-- 2. 剩餘食材螢幕 (不顯示數量) -->
+    <div class="card">
+        <div style="font-size: 0.85em; color: #666; margin-bottom: 8px; font-weight: bold;">📺 目前庫存清單 (剩餘項目)</div>
+        <div id="stockScreen" class="stock-screen">
+            <!-- 剩餘食材標籤會顯示在這裡 -->
+        </div>
     </div>
+
+    <!-- 3. 詳細清單區 -->
+    <div id="displayArea"></div>
 
     <script>
-        // 初始資料
-        let inventory = JSON.parse(localStorage.getItem('myFridgeDataV2')) || [
+        // 圖示對應表
+        const emojiMap = {
+            "高麗菜": "🥬", "白菜": "🥬", "青菜": "🥦", "空心菜": "🌿",
+            "牛肉": "🥩", "豬肉": "🐷", "雞肉": "🍗", "羊肉": "🍖",
+            "鯖魚": "🐟", "鱸魚": "🐟", "蝦": "🦐", "蛤蜊": "🐚", "海鮮": "🐙",
+            "豆腐": "⬜", "蛋": "🥚", "鮮奶": "🥛", "水果": "🍎"
+        };
+
+        function getEmoji(name) {
+            for (let key in emojiMap) {
+                if (name.includes(key)) return emojiMap[key];
+            }
+            return "📍"; // 預設圖示
+        }
+
+        let inventory = JSON.parse(localStorage.getItem('myFridgeDataV3')) || [
             { name: "高麗菜", qty: 1, unit: "顆", cat: "青菜類" },
             { name: "牛肉", qty: 3, unit: "片", cat: "肉類" },
-            { name: "鯖魚", qty: 2, unit: "條", cat: "海鮮/其他" },
-            { name: "鱸魚", qty: 1, unit: "條", cat: "海鮮/其他" },
-            { name: "豆腐", qty: 3, unit: "片", cat: "海鮮/其他" }
+            { name: "鯖魚", qty: 2, unit: "條", cat: "海鮮類" },
+            { name: "鱸魚", qty: 1, unit: "條", cat: "海鮮類" },
+            { name: "豆腐", qty: 3, unit: "片", cat: "其他" }
         ];
 
         function saveData() {
-            localStorage.setItem('myFridgeDataV2', JSON.stringify(inventory));
+            localStorage.setItem('myFridgeDataV3', JSON.stringify(inventory));
         }
 
         function render() {
             const displayArea = document.getElementById('displayArea');
+            const stockScreen = document.getElementById('stockScreen');
             displayArea.innerHTML = "";
+            stockScreen.innerHTML = "";
             
-            const categories = ["青菜類", "肉類", "海鮮/其他"];
-            
+            // 更新上方螢幕 (僅顯示數量 > 0 的名稱)
+            const activeItems = inventory.filter(item => item.qty > 0);
+            if (activeItems.length === 0) {
+                stockScreen.innerHTML = '<span style="color: #636e72;">(冰箱空空如也)</span>';
+            } else {
+                activeItems.forEach(item => {
+                    stockScreen.innerHTML += `<span class="stock-tag">${getEmoji(item.name)} ${item.name}</span>`;
+                });
+            }
+
+            // 更新下方詳細表格
+            const categories = ["青菜類", "肉類", "海鮮類", "其他"];
             categories.forEach(cat => {
                 const filtered = inventory.filter(item => item.cat === cat);
                 if (filtered.length > 0) {
                     let html = `
-                        <div class="category-section">
-                            <div class="category-title">${cat}</div>
-                            <table>
-                                <thead><tr><th>名稱</th><th>數量管理</th><th>單位</th><th>操作</th></tr></thead>
-                                <tbody>
+                        <div class="category-title">${cat}</div>
+                        <table>
+                            <thead><tr><th>食材</th><th>數量操作</th><th>單位</th><th>🗑️</th></tr></thead>
+                            <tbody>
                     `;
-                    
                     inventory.forEach((item, index) => {
                         if (item.cat === cat) {
                             html += `
                                 <tr>
-                                    <td>${item.name}</td>
+                                    <td><span class="emoji">${getEmoji(item.name)}</span>${item.name}</td>
                                     <td>
                                         <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
                                         <span class="count-display">${item.qty}</span>
@@ -90,13 +130,12 @@
                                         <button class="btn-zero" onclick="zeroQty(${index})">歸零</button>
                                     </td>
                                     <td>${item.unit}</td>
-                                    <td><button class="btn-delete" onclick="deleteItem(${index})">🗑️</button></td>
+                                    <td><button class="btn-delete" onclick="deleteItem(${index})">❌</button></td>
                                 </tr>
                             `;
                         }
                     });
-                    
-                    html += `</tbody></table></div>`;
+                    html += `</tbody></table>`;
                     displayArea.innerHTML += html;
                 }
             });
@@ -110,10 +149,8 @@
         }
 
         function zeroQty(index) {
-            if(confirm(`要將 ${inventory[index].name} 數量歸零嗎？`)) {
-                inventory[index].qty = 0;
-                render();
-            }
+            inventory[index].qty = 0;
+            render();
         }
 
         function addNewItem() {
@@ -128,13 +165,11 @@
                 document.getElementById('itemName').value = "";
                 document.getElementById('itemQty').value = "1";
                 document.getElementById('itemUnit').value = "";
-            } else {
-                alert("資訊填寫不完整喔！");
             }
         }
 
         function deleteItem(index) {
-            if(confirm(`確定要從清單移除 ${inventory[index].name} 嗎？`)) {
+            if(confirm(`確定移除 ${inventory[index].name}？`)) {
                 inventory.splice(index, 1);
                 render();
             }
