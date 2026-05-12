@@ -3,33 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>冰箱食材智能管家</title>
+    <title>冰箱食材管理系統 v4</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background-color: #f4f7f6; }
+        body { font-family: "Microsoft JhengHei", sans-serif; max-width: 650px; margin: 20px auto; padding: 10px; background-color: #f0f2f5; }
         h2 { color: #2c3e50; text-align: center; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
         
-        /* 新增欄位樣式 */
+        /* 輸入區樣式 */
         .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
         .btn-add { background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        /* 剩餘食材螢幕樣式 */
-        .stock-screen { background: #2d3436; color: #55efc4; padding: 15px; border-radius: 8px; font-family: monospace; min-height: 50px; line-height: 1.6; }
-        .stock-tag { display: inline-block; background: rgba(85, 239, 196, 0.1); border: 1px solid #55efc4; padding: 2px 8px; margin: 3px; border-radius: 4px; font-size: 14px; }
+        /* 庫存螢幕 (白底) */
+        .stock-screen { background: #ffffff; border: 2px solid #e0e0e0; color: #2d3436; padding: 15px; border-radius: 8px; min-height: 40px; line-height: 1.8; }
+        .stock-tag { display: inline-block; background: #f1f3f5; border: 1px solid #dee2e6; padding: 2px 10px; margin: 4px; border-radius: 20px; font-size: 14px; color: #495057; }
 
         /* 表格樣式 */
-        .category-title { background: #e9ecef; padding: 8px 12px; border-left: 5px solid #007bff; font-weight: bold; margin: 20px 0 10px 0; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #666; font-size: 0.85em; }
+        .category-title { background: #e9ecef; padding: 8px 12px; border-left: 5px solid #007bff; font-weight: bold; margin: 25px 0 10px 0; border-radius: 0 4px 4px 0; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; font-size: 14px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f1f1; }
+        th { background-color: #fafafa; color: #888; font-weight: normal; }
         
-        .btn-qty { width: 30px; height: 30px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 6px; }
-        .btn-zero { background-color: #ffeaa7; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 5px; color: #d35400; }
-        .btn-delete { background: none; border: none; cursor: pointer; filter: grayscale(1); }
-        .count-display { display: inline-block; width: 35px; text-align: center; font-weight: bold; font-size: 1.1em; }
-        .emoji { font-size: 1.2em; margin-right: 5px; }
+        /* 功能按鈕 */
+        .btn-qty { width: 28px; height: 28px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 4px; }
+        .btn-zero { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #856404; }
+        .btn-delete { background: none; border: none; cursor: pointer; font-size: 18px; padding: 0 5px; }
+        .count-display { display: inline-block; width: 25px; text-align: center; font-weight: bold; }
+        
+        /* 表格內的下拉選單 */
+        .inline-select { padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid #eee; background: #fdfdfd; }
     </style>
 </head>
 <body>
@@ -52,19 +55,16 @@
         </div>
     </div>
 
-    <!-- 2. 剩餘食材螢幕 (不顯示數量) -->
+    <!-- 2. 剩餘食材螢幕 (白底) -->
     <div class="card">
-        <div style="font-size: 0.85em; color: #666; margin-bottom: 8px; font-weight: bold;">📺 目前庫存清單 (剩餘項目)</div>
-        <div id="stockScreen" class="stock-screen">
-            <!-- 剩餘食材標籤會顯示在這裡 -->
-        </div>
+        <div style="font-size: 0.85em; color: #888; margin-bottom: 8px; font-weight: bold;">📋 目前庫存清單</div>
+        <div id="stockScreen" class="stock-screen"></div>
     </div>
 
     <!-- 3. 詳細清單區 -->
     <div id="displayArea"></div>
 
     <script>
-        // 圖示對應表
         const emojiMap = {
             "高麗菜": "🥬", "白菜": "🥬", "青菜": "🥦", "空心菜": "🌿",
             "牛肉": "🥩", "豬肉": "🐷", "雞肉": "🍗", "羊肉": "🍖",
@@ -76,10 +76,10 @@
             for (let key in emojiMap) {
                 if (name.includes(key)) return emojiMap[key];
             }
-            return "📍"; // 預設圖示
+            return "📍";
         }
 
-        let inventory = JSON.parse(localStorage.getItem('myFridgeDataV3')) || [
+        let inventory = JSON.parse(localStorage.getItem('myFridgeDataV4')) || [
             { name: "高麗菜", qty: 1, unit: "顆", cat: "青菜類" },
             { name: "牛肉", qty: 3, unit: "片", cat: "肉類" },
             { name: "鯖魚", qty: 2, unit: "條", cat: "海鮮類" },
@@ -88,7 +88,7 @@
         ];
 
         function saveData() {
-            localStorage.setItem('myFridgeDataV3', JSON.stringify(inventory));
+            localStorage.setItem('myFridgeDataV4', JSON.stringify(inventory));
         }
 
         function render() {
@@ -97,17 +97,16 @@
             displayArea.innerHTML = "";
             stockScreen.innerHTML = "";
             
-            // 更新上方螢幕 (僅顯示數量 > 0 的名稱)
+            // 更新上方螢幕
             const activeItems = inventory.filter(item => item.qty > 0);
             if (activeItems.length === 0) {
-                stockScreen.innerHTML = '<span style="color: #636e72;">(冰箱空空如也)</span>';
+                stockScreen.innerHTML = '<span style="color: #ccc;">(目前沒有食材)</span>';
             } else {
                 activeItems.forEach(item => {
                     stockScreen.innerHTML += `<span class="stock-tag">${getEmoji(item.name)} ${item.name}</span>`;
                 });
             }
 
-            // 更新下方詳細表格
             const categories = ["青菜類", "肉類", "海鮮類", "其他"];
             categories.forEach(cat => {
                 const filtered = inventory.filter(item => item.cat === cat);
@@ -115,14 +114,23 @@
                     let html = `
                         <div class="category-title">${cat}</div>
                         <table>
-                            <thead><tr><th>食材</th><th>數量操作</th><th>單位</th><th>🗑️</th></tr></thead>
+                            <thead><tr><th width="40"></th><th>食材名稱</th><th>類別切換</th><th>數量</th><th>單位</th></tr></thead>
                             <tbody>
                     `;
                     inventory.forEach((item, index) => {
                         if (item.cat === cat) {
                             html += `
                                 <tr>
-                                    <td><span class="emoji">${getEmoji(item.name)}</span>${item.name}</td>
+                                    <td><button class="btn-delete" onclick="deleteItem(${index})">🗑️</button></td>
+                                    <td>${getEmoji(item.name)} ${item.name}</td>
+                                    <td>
+                                        <select class="inline-select" onchange="changeCat(${index}, this.value)">
+                                            <option value="青菜類" ${item.cat==='青菜類'?'selected':''}>🥬 青菜</option>
+                                            <option value="肉類" ${item.cat==='肉類'?'selected':''}>🥩 肉類</option>
+                                            <option value="海鮮類" ${item.cat==='海鮮類'?'selected':''}>🐟 海鮮</option>
+                                            <option value="其他" ${item.cat==='其他'?'selected':''}>📦 其他</option>
+                                        </select>
+                                    </td>
                                     <td>
                                         <button class="btn-qty" onclick="updateQty(${index}, -1)">-</button>
                                         <span class="count-display">${item.qty}</span>
@@ -130,7 +138,6 @@
                                         <button class="btn-zero" onclick="zeroQty(${index})">歸零</button>
                                     </td>
                                     <td>${item.unit}</td>
-                                    <td><button class="btn-delete" onclick="deleteItem(${index})">❌</button></td>
                                 </tr>
                             `;
                         }
@@ -150,6 +157,11 @@
 
         function zeroQty(index) {
             inventory[index].qty = 0;
+            render();
+        }
+
+        function changeCat(index, newCat) {
+            inventory[index].cat = newCat;
             render();
         }
 
