@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的冰箱管理系統 v5</title>
+    <title>我的冰箱管理系統 v6</title>
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; max-width: 650px; margin: 20px auto; padding: 10px; background-color: #f0f2f5; }
         h2 { color: #2c3e50; text-align: center; }
@@ -19,12 +19,12 @@
         .stock-screen { background: #ffffff; border: 2px solid #e0e0e0; padding: 15px; border-radius: 8px; min-height: 40px; }
         .stock-tag { display: inline-block; background: #f1f3f5; border: 1px solid #dee2e6; padding: 2px 10px; margin: 4px; border-radius: 20px; font-size: 14px; }
 
-        /* 表格與排序樣式 */
-        .category-title { background: #e9ecef; padding: 8px 12px; border-left: 5px solid #007bff; font-weight: bold; margin: 25px 0 10px 0; }
+        /* 表格與分類樣式 */
+        .category-title { background: #e9ecef; padding: 8px 12px; border-left: 5px solid #007bff; font-weight: bold; margin: 25px 0 10px 0; border-radius: 0 4px 4px 0; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; font-size: 14px; }
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f1f1; }
-        .out-of-stock { color: #adb5bd; background-color: #fafafa; } /* 用完食材的樣式 */
-        
+        .out-of-stock { color: #adb5bd; background-color: #fafafa; } 
+
         /* 功能按鈕 */
         .btn-copy { background: #e7f1ff; color: #007bff; border: 1px solid #b6d4fe; border-radius: 4px; cursor: pointer; padding: 2px 6px; margin-left: 5px; font-size: 12px; }
         .btn-qty { width: 28px; height: 28px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 4px; }
@@ -32,8 +32,9 @@
         .btn-delete { background: none; border: none; cursor: pointer; font-size: 18px; }
         .inline-select { padding: 4px; font-size: 12px; border: 1px solid #eee; }
 
-        .sync-box { display: flex; gap: 5px; margin-top: 10px; }
-        .btn-sync { font-size: 11px; padding: 5px 10px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 4px; }
+        /* 同步工具 */
+        .sync-tools { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-sync { flex: 1; font-size: 12px; padding: 8px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -61,20 +62,18 @@
     </div>
 
     <div class="card">
-        <div style="font-size: 0.85em; color: #888; margin-bottom: 8px; font-weight: bold;">📋 目前庫存清單</div>
+        <div style="font-size: 0.85em; color: #888; margin-bottom: 8px; font-weight: bold;">📋 目前庫存看板</div>
         <div id="stockScreen" class="stock-screen"></div>
-        <div class="sync-box">
-            <button class="btn-sync" onclick="exportData()">複製代碼</button>
-            <button class="btn-sync" onclick="importData()">匯入代碼</button>
+        <div class="sync-tools">
+            <button class="btn-sync" onclick="exportData()">📤 複製資料代碼</button>
+            <button class="btn-sync" onclick="importData()">📥 匯入代碼</button>
         </div>
     </div>
 
     <div id="displayArea"></div>
 
     <script>
-        const emojiMap = {
-            "高麗菜":"🥬","牛肉":"🥩","鯖魚":"🐟","鱸魚":"🐟","蘋果":"🍎","香蕉":"🍌","蛋":"🥚","牛奶":"🥛","吐司":"🍞","辣椒":"🌶️","可樂":"🥤","餅乾":"🍪"
-        };
+        const emojiMap = {"高麗菜":"🥬", "牛肉":"🥩", "鯖魚":"🐟", "蛋":"🥚", "蘋果":"🍎"};
         function getEmoji(name){ for(let k in emojiMap){ if(name.includes(k)) return emojiMap[k]; } return "📍"; }
 
         const DB_NAME = 'myFridgeData_Final';
@@ -82,22 +81,12 @@
 
         function saveData() { localStorage.setItem(DB_NAME, JSON.stringify(inventory)); }
 
-        // 一鍵複製品項功能
-        function copyItem(index) {
-            const item = inventory[index];
-            document.getElementById('itemName').value = item.name;
-            document.getElementById('itemUnit').value = item.unit;
-            document.getElementById('itemCategory').value = item.cat;
-            document.getElementById('itemQty').focus();
-        }
-
         function render() {
             const displayArea = document.getElementById('displayArea');
             const stockScreen = document.getElementById('stockScreen');
             displayArea.innerHTML = "";
             stockScreen.innerHTML = "";
             
-            // 更新看板
             inventory.filter(item => item.qty > 0).forEach(item => {
                 stockScreen.innerHTML += `<span class="stock-tag">${getEmoji(item.name)} ${item.name}</span>`;
             });
@@ -107,22 +96,15 @@
             categories.forEach(cat => {
                 let filtered = inventory.filter(item => item.cat === cat);
                 if (filtered.length > 0) {
-                    // 排序邏輯：數量大於 0 的在前，等於 0 的在後
                     filtered.sort((a, b) => (b.qty > 0) - (a.qty > 0));
-
-                    let html = `<div class="category-title">${cat}</div><table><thead><tr><th width="30"></th><th>食材名稱</th><th>類別</th><th>數量</th><th>單位</th></tr></thead><tbody>`;
-                    
+                    let html = `<div class="category-title">${cat}</div><table><tbody>`;
                     filtered.forEach(item => {
                         const originalIndex = inventory.indexOf(item);
                         const isOut = item.qty === 0 ? 'class="out-of-stock"' : '';
-                        
                         html += `
                             <tr ${isOut}>
-                                <td><button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button></td>
-                                <td>
-                                    ${getEmoji(item.name)} ${item.name}
-                                    <button class="btn-copy" onclick="copyItem(${originalIndex})" title="快速新增此項">➕</button>
-                                </td>
+                                <td width="30"><button class="btn-delete" onclick="deleteItem(${originalIndex})">🗑️</button></td>
+                                <td>${getEmoji(item.name)} ${item.name} <button class="btn-copy" onclick="copyItem(${originalIndex})">➕</button></td>
                                 <td>
                                     <select class="inline-select" onchange="changeCat(${originalIndex}, this.value)">
                                         ${categories.map(c => `<option value="${c}" ${item.cat===c?'selected':''}>${c}</option>`).join('')}
@@ -130,7 +112,7 @@
                                 </td>
                                 <td>
                                     <button class="btn-qty" onclick="updateQty(${originalIndex}, -1)">-</button>
-                                    <span class="count-display">${item.qty}</span>
+                                    <span style="width:25px; display:inline-block; text-align:center; font-weight:bold">${item.qty}</span>
                                     <button class="btn-qty" onclick="updateQty(${originalIndex}, 1)">+</button>
                                     <button class="btn-zero" onclick="zeroQty(${originalIndex})">歸零</button>
                                 </td>
@@ -145,26 +127,49 @@
             saveData();
         }
 
-        // --- 核心邏輯 ---
+        // --- 自動合併邏輯在此 ---
+        function addNewItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const qty = parseInt(document.getElementById('itemQty').value);
+            const unit = document.getElementById('itemUnit').value.trim();
+            const cat = document.getElementById('itemCategory').value;
+
+            if(name && !isNaN(qty) && unit){ 
+                // 檢查是否已有相同名稱且相同分類的品項
+                const existingIndex = inventory.findIndex(item => item.name === name && item.cat === cat);
+
+                if (existingIndex !== -1) {
+                    // 如果存在，直接累加數量
+                    inventory[existingIndex].qty += qty;
+                    // 同步更新單位（以最新的為主）
+                    inventory[existingIndex].unit = unit;
+                } else {
+                    // 如果不存在，新增一列
+                    inventory.push({name, qty, unit, cat}); 
+                }
+                
+                render();
+                document.getElementById('itemName').value = "";
+                document.getElementById('itemQty').value = "1";
+                document.getElementById('itemUnit').value = "";
+            }
+        }
+
         function updateQty(i, c){ inventory[i].qty += c; if(inventory[i].qty < 0) inventory[i].qty = 0; render(); }
         function zeroQty(i){ inventory[i].qty = 0; render(); }
         function changeCat(i, n){ inventory[i].cat = n; render(); }
-        function deleteItem(i){ if(confirm(`移除 ${inventory[i].name}？`)){ inventory.splice(i,1); render(); } }
-        function addNewItem() {
-            const name = document.getElementById('itemName').value;
-            const qty = parseInt(document.getElementById('itemQty').value);
-            const unit = document.getElementById('itemUnit').value;
-            const cat = document.getElementById('itemCategory').value;
-            if(name && !isNaN(qty) && unit){ 
-                inventory.push({name, qty, unit, cat}); 
-                render();
-                document.getElementById('itemName').value = "";
-            }
+        function deleteItem(i){ if(confirm(`確定要移除 ${inventory[i].name} 嗎？`)){ inventory.splice(i,1); render(); } }
+        function copyItem(i) {
+            const item = inventory[i];
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemUnit').value = item.unit;
+            document.getElementById('itemCategory').value = item.cat;
+            document.getElementById('itemQty').focus();
         }
         function exportData() { navigator.clipboard.writeText(JSON.stringify(inventory)); alert("代碼已複製！"); }
         function importData() {
-            const code = prompt("貼上代碼：");
-            if (code) { inventory = JSON.parse(code); render(); alert("匯入成功！"); }
+            const code = prompt("請貼上資料代碼：");
+            if (code) { try { inventory = JSON.parse(code); render(); alert("匯入成功！"); } catch(e) { alert("代碼錯誤"); } }
         }
 
         render();
